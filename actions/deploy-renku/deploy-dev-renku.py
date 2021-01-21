@@ -157,13 +157,6 @@ if __name__ == "__main__":
         action="store_true",
         default=os.environ.get("RENKU_ANONYMOUS_SESSIONS") == "true",
     )
-    parser.add_argument(
-        "--tests-enabled",
-        help="Enable setting up tests",
-        action="store_true",
-        default=os.environ.get("RENKU_TESTS_ENABLED") == "true",
-    )
-
     args = parser.parse_args()
     component_versions = {a: b for a, b in vars(args).items() if a.replace("_", "-") in components}
 
@@ -211,38 +204,8 @@ if __name__ == "__main__":
         "20m",
     ]
 
-    additional_values = {}
-
-    if args.anonymous_sessions:
-        additional_values = {**additional_values, **{"global": {"anonymousSessions": {"enabled": True}}}}
-
-    if args.tests_enabled:
-        additional_values = {
-            **additional_values,
-            **{
-                "tests": {
-                    "enabled": True,
-                    "parameters": {
-                        "username": "renku-test",
-                        "fullname": "Renku Bot",
-                        "email": "renku@datascience.ch",
-                        "password": os.getenv("RENKU_BOT_DEV_PASSWORD"),
-                        "anonAvailable": "true",
-                        "register": "true",
-                    },
-                    "resultsS3": {
-                        "host": "os.zhdk.cloud.switch.ch",
-                        "bucket": "dev-acceptance-tests-results",
-                        "filename": f'tests-artifacts-{os.getenv("GITHUB_SHA")}',
-                        "accessKey": os.getenv("S3_DEV_ACCESS"),
-                        "secretKey": os.getenv("S3_DEV_SECRET"),
-                    },
-                }
-            },
-        }
-    temp_values = tempfile.NamedTemporaryFile()
-    yaml.dump(additional_values, temp_values, encoding="utf-8")
-    helm_command += ["--values", temp_values.name]
+    if os.getenv("TEST_ARTIFACTS_PATH"):
+        helm_command += ["--set", f'tests.resultsS3.filename={os.getenv("TEST_ARTIFACTS_PATH")}']
 
     # deploy the main chart
     check_call(

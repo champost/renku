@@ -16,7 +16,9 @@ RUN mkdir -p /usr/share/man/man1 && \
     wget --quiet -O - "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key add && \
     apt-get update && \
     apt-get install -y openjdk-11-jdk sbt && \
-    rm -rf /var/cache/apt
+    rm -rf /var/cache/apt && \
+    wget --quiet https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc && \
+    chmod 0755 /usr/local/bin/mc
 
 ARG renku_python_ref=master
 RUN python3 -m pip install \
@@ -29,9 +31,6 @@ RUN python3 -m pip install \
     'pandas==0.25.3' \
     'seaborn==0.9.0' \
     git+https://github.com/SwissDataScienceCenter/renku-python.git@${renku_python_ref}
-
-RUN wget --quiet https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc && \
-    chmod 0755 /usr/local/bin/mc
 
 ENV DOCKER="1"
 COPY . /tests
